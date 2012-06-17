@@ -1,0 +1,67 @@
+Help on module rsscrawler:
+
+NAME
+    rsscrawler
+
+FILE
+    c:\users\fangning\desktop\rssarchive\rsscrawler.py
+
+DESCRIPTION
+    Following explanation gives purposes of some files generated in the process :
+    1. RSSName.db stores words frequency file generated from fetched web pages in order to visualize words trends of News API.
+    2. fileName.db (fileName means one RSS source link address) stores all links of web pages fetched in terms of one RSS link  source.
+    3. MERGE.TXT stores updated links, title, source, and date of web pages fetched from last commit  in terms of one News source, such as CNN News.
+    4. filename.html stores the whole webpage fetched, where filename is gotten by news' title.
+
+FUNCTIONS
+    calWordsFrequency(content, daytime)
+        # calculate word frequency
+    
+    fetchNews()
+        # fetch all RSS sources in terms of one news site (a source file)
+    
+    getNameAndLanguageFromResource(rssResource)
+        # for give some parameters in MERGE.TXT
+    
+    loadAllFetchedLinks(fileName)
+        # load all fetched links from .db file
+    
+    loadWordsFrequency()
+        # load word frequency record from cnn.txt file
+    
+    processArgs(argv)
+        # process argments input
+    
+    replaceAll4FileName(oldName)
+        # every webpage fetched is stored in a specified html file in hard disk.
+        # Its name is its title, so we need to remove illegal chars from its title in order to consist with file name requirement.
+    
+    storeNewLinkInMERGEandHTML(rssResource, page, title, link, date)
+        # store new fetched links into MERGE.TXT and a whole webpage into .html file
+    
+    updateNewLinks(fileName, newlinks)
+        # update new fetched links into .db file
+    
+    updateWordsFrequency()
+        # words frequency file format is "date  source  words   frequency"
+
+DATA
+    __author__ = 'Fang Ning'
+    __credits__ = "This code mainly complete to fetch all RSS news ... but...
+    __date__ = '06.10.2012'
+    __version__ = '1.5.0'
+
+VERSION
+    1.5.0
+
+DATE
+    06.10.2012
+
+AUTHOR
+    Fang Ning
+
+CREDITS
+    This code mainly complete to fetch all RSS news . 
+    You may freely use it in your project , but please remain the head's  information part.
+
+
