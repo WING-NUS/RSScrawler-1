@@ -13,37 +13,44 @@ DESCRIPTION
     3. MERGE.TXT stores updated links, title, source, and date of web pages fetched from last commit  in terms of one News source, such as CNN News.
     4. filename.html stores the whole webpage fetched, where filename is gotten by news' title.
 
-FUNCTIONS
-    calWordsFrequency(content, daytime)
-        # calculate word frequency
+CLASSES
+    rsscrawler
     
-    fetchNews()
-        # fetch all RSS sources in terms of one news site (a source file)
-    
-    getNameAndLanguageFromResource(rssResource)
-        # for give some parameters in MERGE.TXT
-    
-    loadAllFetchedLinks(fileName)
-        # load all fetched links from .db file
-    
-    loadWordsFrequency()
-        # load word frequency record from cnn.txt file
-    
-    processArgs(argv)
-        # process argments input
-    
-    replaceAll4FileName(oldName)
-        # every webpage fetched is stored in a specified html file in hard disk.
-        # Its name is its title, so we need to remove illegal chars from its title in order to consist with file name requirement.
-    
-    storeNewLinkInMERGEandHTML(rssResource, page, title, link, date)
-        # store new fetched links into MERGE.TXT and a whole webpage into .html file
-    
-    updateNewLinks(fileName, newlinks)
-        # update new fetched links into .db file
-    
-    updateWordsFrequency()
-        # words frequency file format is "date  source  words   frequency"
+    class rsscrawler
+     |  Methods defined here:
+     |  
+     |  __init__(self)
+     |  
+     |  calWordsFrequency(self, content, daytime)
+     |      # calculate word frequency
+     |  
+     |  fetchNews(self)
+     |      # fetch all RSS sources in terms of one news site (a source file)
+     |  
+     |  getNameAndLanguageFromResource(self, rssResource)
+     |      # for give some parameters in MERGE.TXT
+     |  
+     |  loadAllFetchedLinks(self, fileName)
+     |      # load all fetched links from .db file
+     |  
+     |  loadWordsFrequency(self)
+     |      # load word frequency record from cnn.txt file
+     |  
+     |  processArgs(self, argv)
+     |      # process argments input
+     |  
+     |  replaceAll4FileName(self, oldName)
+     |      # every webpage fetched is stored in a specified html file in hard disk.
+     |      # Its name is its title, so we need to remove illegal chars from its title in order to consist with file name requirement.
+     |  
+     |  storeNewLinkInMERGEandHTML(self, rssResource, page, title, link, date)
+     |      # store new fetched links into MERGE.TXT and a whole webpage into .html file
+     |  
+     |  updateNewLinks(self, fileName, newlinks)
+     |      # update new fetched links into .db file
+     |  
+     |  updateWordsFrequency(self)
+     |      # words frequency file format is "date  source  words   frequency"
 
 DATA
     __author__ = 'Fang Ning'
