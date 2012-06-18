@@ -274,12 +274,11 @@ def processArgs(argv):
 
 
 	commandName = os.path.basename(os.path.abspath( __file__ ))
-	# print commandName
 	path = os.path.abspath( __file__ ).replace(commandName, RSSName+'/') 
 	ppath = path.replace('\\','/') # distinguish windows from linux system
 
 	try:
-		myFile = open( os.path.abspath( __file__ ).replace('\\','/').replace(commandName, sourcesfile) , 'r')
+		myFile = open( ppath + sourcesfile, 'r')
 		for line in myFile:
 			string = line.strip(' ').replace('\t','').replace('\r','').replace('\n','')
 			if string != '':
@@ -309,7 +308,7 @@ def fetchNews():
 	global sources
 
 	for rssResource in sources:
-		print "rssResource = "+rssResource
+		# print "rssResource = "+rssResource
 		new_links = []
 		fileName = replaceAll4FileName(rssResource)
 
