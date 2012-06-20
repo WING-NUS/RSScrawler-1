@@ -1,0 +1,26 @@
+Help on module SpecialSites:
+
+NAME
+    SpecialSites - # -*- coding: utf-8 -*-
+
+FILE
+    c:\users\fangning\desktop\rssarchive\specialsites.py
+
+CLASSES
+    SpecialSites
+    
+    class SpecialSites
+     |  Static methods defined here:
+     |  
+     |  getNameAndLanguageFromResource(rssResource, sourcename, language)
+     |      # get some parameters for storage file, that is, MERGE.TXT
+     |  
+     |  newyorktimes(page, link)
+     |      # special processing for some RSS sources
+     |  
+     |  straitstimes(page, link)
+
+DATA
+    __flags__ = {'http://blog.sina.com.cn/rss/1191258123.xml': ['twocold',...
+
+

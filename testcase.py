@@ -11,16 +11,22 @@ class TestRSSCrawlerFunctions(unittest.TestCase):
 		self.instance.stopWords = ['shall', 'applause', 'a', 'able', 'about', 'across', 'after', 'all', 'almost', 'also', 'am', 'among', 'an', 'and', 'any', 'are', 'as', 'at', 'be', 'because', 'been', 'but', 'by', 'can', 'cannot', 'could', 'dear', 'did', 'do', 'does', 'either', 'else', 'ever', 'every', 'for', 'from', 'get', 'got', 'had', 'has', 'have', 'he', 'her', 'hers', 'him', 'his', 'how', 'however', 'i', 'if', 'in', 'into', 'is', 'it', 'its', 'just', 'least', 'let', 'like', 'likely', 'may', 'me', 'might', 'most', 'must', 'my', 'neither', 'no', 'nor', 'not', 'of', 'off', 'often', 'on', 'only', 'or', 'other', 'our', 'own', 'rather', 'said', 'say', 'says', 'she', 'should', 'since', 'so', 'some', 'than', 'that', 'the', 'their', 'them', 'then', 'there', 'these', 'they', 'this', 'tis', 'to', 'too', 'twas', 'us', 'wants', 'was', 'we', 'were', 'what', 'when', 'where', 'which', 'while', 'who', 'whom', 'why', 'will', 'with', 'would', 'yet', 'you', 'your']
 
 		self.instance.RSSName ='test'
+		self.instance.current_path = ''
 		self.instance.path = ''
 		self.instance.ppath = ''
+		# configaration
+		self.instance.config = {"timezonedifference":8 ,  "wordsFrequency":"false" ,"storagefile":"MERGE.TXT"}
 
 		# "wordsFreq" is used to count words that occur in a title .
 		self.instance.wordsFreq = {}
 
-	def test_fetchNews(self):		
-		self.instance.fetchNews()
+	def test_fetchNews_wrongURL(self):		
+		result = self.instance.fetchNews()
+		self.instance.sources = ['www']
+
+		self.assertEqual(result, "wrong url")
 		# should raise an exception 
-		self.assertRaises(TypeError, self.instance.fetchNews(), (1,2,3))
+		# self.assertRaises(TypeError, self.instance.fetchNews(), (1,2,3))
 
 if __name__ == '__main__':
 	suite = unittest.TestLoader().loadTestsFromTestCase(TestRSSCrawlerFunctions)
