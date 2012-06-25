@@ -5,7 +5,7 @@ import SpecialSites
 class TestRSSCrawlerFunctions(unittest.TestCase):
 
 	def setUp(self):
-		self.instance = rsscrawlertest.rsscrawler()
+		self.instance = rsscrawler.rsscrawler()
 		# test 15 sources
 		# self.instance.sources = ['http://feeds.foxnews.com/foxnews/entertainment','http://rss.cnn.com/rss/edition.rss','http://web.orange.co.uk/ice_article/feed.php?channel=news_home&format=rss','http://blog.sina.com.cn/rss/1191258123.xml','http://feeds.feedburner.com/VivaWoman','http://www.corkman.ie/news/rss','http://www.dailymail.co.uk/home/index.rss','http://www.economist.com/rss/the_world_this_week_rss.xml','http://feeds.guardian.co.uk/theguardian/rss','http://feeds.feedburner.com/IbtimescomWorld?format=xml','http://www.irishsun.com/index.php/id/aba4168066a10b8d/headlines.xml','http://www.english.rfi.fr/last_24h/rss','http://feeds.smh.com.au/rssheadlines/top.rss','http://www.straitstimes.com/STI/STIFILES/rss/mostreadstories.xml','http://www.swissinfo.org/eng/rss/front/index.xml','http://www.thesun.co.uk/sol/homepage/rss/' ]
 		# count words by stop words table
@@ -45,7 +45,7 @@ class TestRSSCrawlerFunctions(unittest.TestCase):
 
 	def test_storeNewLinkInMERGEandHTML(self):
 		page,link = self.instance.fetchWebpage('http://www.nus.edu.sg')
-		result = self.instance.storeNewLinkInMERGEandHTML('http://www.nus.edu.sg',page, 'nus',link, '2012-06-20')
+		result = self.instance.storeNewLinkInMERGEandHTML('http://www.nus.edu.sg',page, 'nus',link,1, '2012-06-20')
 		self.assertEqual(result, None)
 
 	def test_loadWordsFrequency(self):

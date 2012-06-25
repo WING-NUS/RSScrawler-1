@@ -1,5 +1,5 @@
 
-C:\Users\fangning\Desktop\RSSarchive\testcode>python testcase.py
+C:\Users\fangning\Desktop\RSSarchive>python testcase.py
 test_calWordsFrequency (__main__.TestRSSCrawlerFunctions) ... ok
 test_fetchNews (__main__.TestRSSCrawlerFunctions) ... ok
 test_fetchWebpage_URL (__main__.TestRSSCrawlerFunctions) ... ok
@@ -17,8 +17,8 @@ test_storeNewLinkInMERGEandHTML (__main__.TestRSSCrawlerFunctions) ... ok
 test_updateNewLinks (__main__.TestRSSCrawlerFunctions) ... ok
 
 ----------------------------------------------------------------------
-Ran 11 tests in 16.134s
+Ran 11 tests in 38.934s
 
 OK
 
-C:\Users\fangning\Desktop\RSSarchive\testcode>
+C:\Users\fangning\Desktop\RSSarchive>
