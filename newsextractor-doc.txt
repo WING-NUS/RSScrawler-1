@@ -1,0 +1,24 @@
+Help on module newsextractor:
+
+NAME
+    newsextractor - # -*- coding: utf-8 -*-
+
+FILE
+    c:\users\fangning\desktop\rssarchive\newsextractor.py
+
+CLASSES
+    Extract
+    
+    class Extract
+     |  Methods defined here:
+     |  
+     |  extract(self, page, sourcename=None)
+     |      # extract title, date, and content
+     |  
+     |  findNextPage(self, page, sourcename=None)
+     |      # find next page
+
+DATA
+    __flags__ = {'ananova': {'content': ['div', 'class', 'articleinner'], ...
+
+

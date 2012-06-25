@@ -23,6 +23,7 @@ import time
 import datetime
 import math
 import urllib
+import urllib2
 import re
 import fileinput
 import sys, getopt
@@ -33,6 +34,7 @@ import json
 import ConfigParser
 
 from SpecialSites import SpecialSites
+from newsextractor import Extract
 
 class rsscrawler:
 	# every webpage fetched is stored in a specified html file in hard disk.
@@ -137,7 +139,7 @@ class rsscrawler:
 			return 'failed'
 
 	# store new fetched links into MERGE.TXT and a whole webpage into .html file 
-	def storeNewLinkInMERGEandHTML(self,rssResource, page, title, link, date):
+	def storeNewLinkInMERGEandHTML(self,rssResource, page, title, link, page_num, date):
 		dd = self.replaceAll4FileName(title)
 		file_id = int(time.time() * 1000)
 		# print "ppath = "+self.ppath
@@ -148,8 +150,8 @@ class rsscrawler:
 			sourcename = self.RSSName
 			if self.RSSName in self.config['multisource']:
 				sourcename,language = SpecialSites.getNameAndLanguageFromResource(rssResource,sourcename,language)
-			
-			data =  { 'source':rssResource, 'language': language, 'sourcename':sourcename, 'page': 1, 'title': title, 'timestamp-sec': date}
+
+			data =  { 'source':rssResource, 'language': language, 'sourcename':sourcename, 'page': page_num, 'title': title, 'timestamp-sec': date}
 			content = json.dumps(data)
 			new_line = str(file_id)+'.'+dd.encode('utf-8')+'.html '+'	' + link + '	' + link + '	' + content + '	' + '0' + '	' + '-1'
 			myFile2 = open(self.ppath  + self.config['storagefile'], 'a')
@@ -219,9 +221,9 @@ class rsscrawler:
 		if self.RSSName == '':
 			sys.stderr.write( 'Please input News sources name ...\n')
 			sys.exit(3)
-		sys.stderr.write( 'Input News name is : '+ self.RSSName+'\n')
-		sys.stderr.write( 'Input sources is : '+ sourcesfile+'\n')
-		sys.stderr.write( 'stopwords file is : '+ stopwordsfile+'\n')
+		sys.stdout.write( 'Input News name is : '+ self.RSSName+'\n')
+		sys.stdout.write( 'Input sources is : '+ sourcesfile+'\n')
+		sys.stdout.write( 'stopwords file is : '+ stopwordsfile+'\n')
 
 		commandName = os.path.basename(os.path.abspath( __file__ ))
 		self.current_path = os.path.abspath( __file__ ).replace(commandName,'')
@@ -313,31 +315,41 @@ class rsscrawler:
 
 			# fetch all items from a RSS source 
 			for dd in d.entries:
-				time.sleep(0.1)
-
+				ex = Extract()
+				page_num = 1
 				page, link = self.fetchWebpage(dd.link)
-				# special processing for some RSS sources
-				if self.RSSName in self.config['specialsites']:
-					# page, link = globals()["SpecialSites." + self.RSSName](page, link)
-					if self.RSSName == 'newyorktimes':
-						page, link = SpecialSites.newyorktimes(page, link)
-					elif self.RSSName == 'straitstimes':
-						page, link = SpecialSites.straitstimes(page, link)
+				firstPage_link = link
+				while link != None:
+					time.sleep(0.1)					
+					# special processing for some RSS sources
+					if self.RSSName in self.config['specialsites']:
+						# page, link = globals()["SpecialSites." + self.RSSName](page, link)
+						if self.RSSName == 'newyorktimes':
+							page, link = SpecialSites.newyorktimes(page, link)
+						elif self.RSSName == 'straitstimes':
+							page, link = SpecialSites.straitstimes(page, link)
 
-				if (page ==None) or (len(page) == 0):
-					continue # next item
-				
-				if link not in links:
-					
-					# store a new link in a special file , such as, MERGE.TXT, and store its whole webpage in a HTML file
-					self.storeNewLinkInMERGEandHTML(rssResource, page, dd.title, link, str(time.mktime(dd.published_parsed)+self.config['timezonedifference']*3600))
+					if (page == None) or (len(page) == 0):
+						break # next item
 
-					# calculate word frequency in title
-					if self.config['wordsFrequency'] == "True":
-						self.calWordsFrequency(dd.title, str(dd.published_parsed[2]))
+					if link not in links:
+						# store a new link in a special file , such as, MERGE.TXT, and store its whole webpage in a HTML file
+						self.storeNewLinkInMERGEandHTML(rssResource, page, dd.title, firstPage_link, page_num, str(time.mktime(dd.published_parsed)+self.config['timezonedifference']*3600))
 
-					new_links.append(link)
-					links.append(link)
+						# calculate word frequency in title
+						if self.config['wordsFrequency'] == "True":
+							self.calWordsFrequency(dd.title, str(dd.published_parsed[2]))
+
+						new_links.append(link)
+						links.append(link)
+
+						# process next page
+						link = ex.findNextPage(page, self.RSSName)
+						if link != None:
+							page_num +=1
+							page, link = self.fetchWebpage(link)
+					else:
+						break
 
 			if (len(new_links) !=0) :
 				# update all new  links into a db file
