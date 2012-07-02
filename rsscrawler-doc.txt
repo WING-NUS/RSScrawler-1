@@ -25,6 +25,15 @@ CLASSES
      |  calWordsFrequency(self, content, daytime)
      |      # calculate word frequency
      |  
+     |  createAllFetchedLinks(self, fileName)
+     |      # create all fetched links database file
+     |  
+     |  determineDuplication(self, fileName, link)
+     |      # determine duplication of fetched links
+     |  
+     |  fetchAllImages(self, images, webpage_link)
+     |      # fetch all images
+     |  
      |  fetchNews(self)
      |      # fetch all RSS sources in terms of one news site (a source file)
      |  
@@ -33,9 +42,6 @@ CLASSES
      |  
      |  fetchXML(self, rssResource)
      |      # fetch a XML from a RSS source
-     |  
-     |  loadAllFetchedLinks(self, fileName)
-     |      # load all fetched links from .db file
      |  
      |  loadWordsFrequency(self)
      |      # load word frequency record from cnn.txt file
@@ -47,11 +53,11 @@ CLASSES
      |      # every webpage fetched is stored in a specified html file in hard disk.
      |      # file name is its title, so we need to remove illegal chars from its title in order to consist with file name requirement.
      |  
-     |  storeNewLinkInMERGEandHTML(self, rssResource, page, title, link, page_num, date)
+     |  storeNewLinkInMERGEandHTML(self, file_id, rssResource, page, title, firstPage_link, link, page_num, date)
      |      # store new fetched links into MERGE.TXT and a whole webpage into .html file
      |  
-     |  updateNewLinks(self, fileName, newlinks)
-     |      # update new fetched links into .db file
+     |  updateNewLinks(self, fileName, newlink)
+     |      # insert a new fetched link into database
      |  
      |  updateWordsFrequency(self)
      |      # words frequency file format is "date  source  words   frequency"

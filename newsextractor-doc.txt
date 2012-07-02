@@ -12,13 +12,18 @@ CLASSES
     class Extract
      |  Methods defined here:
      |  
-     |  extract(self, page, sourcename=None)
-     |      # extract title, date, and content
+     |  extract(self, stream, sourcename=None)
+     |  
+     |  extractMore(self, pages, sourcename=None)
+     |      # merge multiple pages into one webpage
+     |  
+     |  findAllImages(self, page, netloc, sourcename=None)
+     |      # findAllImages
      |  
      |  findNextPage(self, page, sourcename=None)
      |      # find next page
 
 DATA
-    __flags__ = {'ananova': {'content': ['div', 'class', 'articleinner'], ...
+    __flags__ = {'MissTamChiakSingaporeFoodBlogchinese': {'content': ['div...
 
 

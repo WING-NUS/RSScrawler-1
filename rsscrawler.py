@@ -32,6 +32,7 @@ import string
 import sqlite3
 import json
 import ConfigParser
+from urlparse import urlparse
 
 from SpecialSites import SpecialSites
 from newsextractor import Extract
@@ -103,60 +104,105 @@ class rsscrawler:
 					self.wordsFreq[daytime][word] += 1
 		return self.wordsFreq
 
-	# load all fetched links from .db file
-	def loadAllFetchedLinks(self,fileName):
+	# create all fetched links database file
+	def createAllFetchedLinks(self,fileName):
 		try:
-			links = []
 			if not os.path.exists(self.ppath + fileName +'.db'):
 				conn = sqlite3.connect(self.ppath + fileName +'.db')
 				c = conn.cursor()
 				# Create table
 				c.execute('''CREATE TABLE links (link text)''')
 				c.close()
-			else:
-				conn = sqlite3.connect(self.ppath + fileName +'.db')
-				c = conn.cursor()
-				for line in c.execute('SELECT * FROM links'):
-					links.append(line[0])
-				c.close()
-			return links
 		except:
 			return 'failed'
 
-	# update new fetched links into .db file
-	def updateNewLinks(self,fileName, newlinks):
+	# determine duplication of fetched links
+	def determineDuplication(self,fileName,link):
+		try:
+			conn = sqlite3.connect(self.ppath + fileName +'.db')
+			c = conn.cursor()
+			if type(link) is str:
+				link=link.decode('utf-8')
+			for  a in set(c.execute('SELECT * FROM links')):
+				if link == a[0]:
+					c.close()
+					return 'True'
+			else:
+				c.close()
+				return 'False'
+		except:
+			return 'failed'
+
+	# insert a new fetched link into database
+	def updateNewLinks(self,fileName, newlink):
 		try:
 			conn = sqlite3.connect(self.ppath + fileName+'.db')
 			c = conn.cursor()
-			for line in newlinks:
-				if type(line) is str:
-					line=line.decode('utf-8')
-				c.execute('INSERT INTO links VALUES (?)', (line,))
+			if type(newlink) is str:
+				newlink=newlink.decode('utf-8')
+			c.execute('INSERT INTO links VALUES (?)', (newlink,))
 			conn.commit()
 			c.close()
 			return 'success'
 		except:
 			return 'failed'
 
+	# fetch all images
+	def fetchAllImages(self, images, webpage_link):
+		for a in images.keys():
+			time.sleep(0.001)
+			file_id = int(time.time() * 1000)
+			try:
+				filehandle = urllib.urlopen(images[a]) # fetch an image 
+				img = filehandle.read()
+				link = filehandle.geturl()
+				img_type = urlparse(link).geturl().split('?')[0].split('.').pop()
+				if img_type != 'png' and img_type !='jpg' and img_type !='gif':
+					img_type = 'dynamic_img'
+				# print "img_type = "+img_type
+				img_filename = self.replaceAll4FileName(a)
+			except :
+				# logging.warning("there is a connection error for images")
+				continue
+			filehandle.close()
+
+			try:
+				myFile = open(self.sub_ppath  + str(file_id)+'.'+img_filename+'.'+img_type, 'wb')
+				myFile.write(img)
+				data = {'webpage_link':webpage_link, 'original_link':a}
+				content = json.dumps(data)
+				new_line_img = str(file_id)+'.'+img_filename+'\t' + img_type + '\t'+ str(file_id)+ '\t'+ link + '\t' + link + '\t' + content + '\t' + '0' + '\t' + '-1'
+				myFile2 = open(self.sub_ppath  + self.config['storagefile'], 'a')
+				myFile2.write(new_line_img)
+				myFile2.write('\n')
+			except:
+				# logging.warning("there is a storage error for images") 
+				continue
+			myFile.close()
+			myFile2.close()
+
+		return None
+
+
 	# store new fetched links into MERGE.TXT and a whole webpage into .html file 
-	def storeNewLinkInMERGEandHTML(self,rssResource, page, title, link, page_num, date):
+	def storeNewLinkInMERGEandHTML(self, file_id, rssResource, page, title, firstPage_link, link, page_num, date):
 		dd = self.replaceAll4FileName(title)
-		file_id = int(time.time() * 1000)
 		# print "ppath = "+self.ppath
 		try:
-			myFile = open(self.ppath  + str(file_id)+'.'+dd+'.html', 'w')
+			myFile = open(self.sub_ppath  + str(file_id)+'.'+dd+'.html', 'w')
 			myFile.write(page)
 			language = 'English'
 			sourcename = self.RSSName
 			if self.RSSName in self.config['multisource']:
 				sourcename,language = SpecialSites.getNameAndLanguageFromResource(rssResource,sourcename,language)
 
-			data =  { 'source':rssResource, 'language': language, 'sourcename':sourcename, 'page': page_num, 'title': title, 'timestamp-sec': date}
+			data =  { 'source':rssResource, 'language': language, 'sourcename':sourcename, 'firstPage_link':firstPage_link, 'page': page_num, 'title': title, 'timestamp-sec': date}
 			content = json.dumps(data)
-			new_line = str(file_id)+'.'+dd.encode('utf-8')+'.html '+'	' + link + '	' + link + '	' + content + '	' + '0' + '	' + '-1'
-			myFile2 = open(self.ppath  + self.config['storagefile'], 'a')
-			myFile2.write(new_line)
+			new_line_webpage = str(file_id)+'.'+dd.encode('utf-8')+'.html'+'\t' + 'html'+'\t'+ str(file_id)+'\t' + link + '\t' + link + '\t' + content + '\t' + '0' + '\t' + '-1'
+			myFile2 = open(self.sub_ppath  + self.config['storagefile'], 'a')
+			myFile2.write(new_line_webpage)
 			myFile2.write('\n')
+
 		except UnicodeEncodeError:
 			logging.warning("there is a UnicodeEncodeError")
 			return 'unicode error'
@@ -212,7 +258,8 @@ class rsscrawler:
 				sys.stderr.write( 'rsscrawler.py -n <news name> -i <sources file> [-s <stopwords file>]\n')
 				sys.exit()
 			elif opt == '-n':
-				self.RSSName = arg
+				self.RSSName = arg.split('.')[1]
+				self.TimeStamp = arg.split('.')[0]
 			elif opt == '-i':
 				sourcesfile = arg
 			elif opt =='-s':
@@ -229,9 +276,13 @@ class rsscrawler:
 		self.current_path = os.path.abspath( __file__ ).replace(commandName,'')
 		self.path = os.path.abspath( __file__ ).replace(commandName, self.RSSName+'/') 
 		self.ppath = self.path.replace('\\','/') # process windows style into linux style
+		self.sub_ppath = self.ppath+self.TimeStamp+'.'+self.RSSName+'/'
 
 		if not os.path.exists(self.ppath): 
 			os.makedirs(self.ppath)
+
+		if not os.path.exists(self.sub_ppath): 
+			os.makedirs(self.sub_ppath)
 
 		# setup log file
 		logging.basicConfig(filename=self.ppath+self.RSSName+'.log',level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -288,6 +339,7 @@ class rsscrawler:
 
 	# fetch a whole webpage
 	def fetchWebpage(self, link):
+		file_id = int(time.time() * 1000)
 		try:
 			filehandle = urllib.urlopen(link) # fetch a whole webpage according a link attribution in XML
 			page = filehandle.read()
@@ -295,9 +347,9 @@ class rsscrawler:
 			link = filehandle.geturl()
 		except IOError:
 			logging.warning("there is a connection error") 
-			return None, link
+			return None, link, file_id
 		filehandle.close()
-		return page,link
+		return page,link, file_id
 
 
 	# fetch all RSS sources in terms of one news site (a source file)
@@ -307,7 +359,7 @@ class rsscrawler:
 			new_links = []
 			fileName = self.replaceAll4FileName(rssResource)
 
-			links = self.loadAllFetchedLinks(fileName)
+			self.createAllFetchedLinks(fileName)
 
 			d = self.fetchXML(rssResource)
 			if d == "wrong url":
@@ -317,7 +369,7 @@ class rsscrawler:
 			for dd in d.entries:
 				ex = Extract()
 				page_num = 1
-				page, link = self.fetchWebpage(dd.link)
+				page, link, file_id= self.fetchWebpage(dd.link)
 				firstPage_link = link
 				while link != None:
 					time.sleep(0.1)					
@@ -332,29 +384,33 @@ class rsscrawler:
 					if (page == None) or (len(page) == 0):
 						break # next item
 
-					if link not in links:
+					if self.determineDuplication(fileName,link) == 'False':
+						#  insert the new  link into database
+						self.updateNewLinks(fileName, link)
+
 						# store a new link in a special file , such as, MERGE.TXT, and store its whole webpage in a HTML file
-						self.storeNewLinkInMERGEandHTML(rssResource, page, dd.title, firstPage_link, page_num, str(time.mktime(dd.published_parsed)+self.config['timezonedifference']*3600))
+						self.storeNewLinkInMERGEandHTML(file_id, rssResource, page, dd.title, firstPage_link, link, page_num, str(time.mktime(dd.published_parsed)+self.config['timezonedifference']*3600))
+
+						# store all images in the webpage
+						o = urlparse(link)
+						images = ex.findAllImages(page, o.netloc, self.RSSName)
+						self.fetchAllImages(images, link)
 
 						# calculate word frequency in title
 						if self.config['wordsFrequency'] == "True":
 							self.calWordsFrequency(dd.title, str(dd.published_parsed[2]))
 
 						new_links.append(link)
-						links.append(link)
 
-						# process next page
+						# process multiple pages
 						link = ex.findNextPage(page, self.RSSName)
 						if link != None:
 							page_num +=1
-							page, link = self.fetchWebpage(link)
+							page, link,file_id = self.fetchWebpage(link)
 					else:
 						break
 
 			if (len(new_links) !=0) :
-				# update all new  links into a db file
-				self.updateNewLinks(fileName, new_links)
-
 				# update words frequency record file
 				if self.config['wordsFrequency'] == "True":
 					self.updateWordsFrequency()
@@ -378,9 +434,11 @@ class rsscrawler:
 
 		# give a path name to store webpages and links fetched
 		self.RSSName ='' # store specifical directory name
+		self.TimeStamp = '' # store specifical sub-directory name, format is "TimeStamp.RSSName"
 		self.current_path = ''
 		self.path = ''
 		self.ppath = ''
+		self.sub_ppath = ''
 
 		# "wordsFreq" is used to count words that occur in a title .
 		self.wordsFreq = {}

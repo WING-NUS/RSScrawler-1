@@ -8,7 +8,7 @@ class TestRSSCrawlerFunctions(unittest.TestCase):
 		self.instance = rsscrawler.rsscrawler()
 		self.instance.stopWords = ['shall', 'applause', 'a', 'able', 'about', 'across', 'after', 'all', 'almost', 'also', 'am', 'among', 'an', 'and', 'any', 'are', 'as', 'at', 'be', 'because', 'been', 'but', 'by', 'can', 'cannot', 'could', 'dear', 'did', 'do', 'does', 'either', 'else', 'ever', 'every', 'for', 'from', 'get', 'got', 'had', 'has', 'have', 'he', 'her', 'hers', 'him', 'his', 'how', 'however', 'i', 'if', 'in', 'into', 'is', 'it', 'its', 'just', 'least', 'let', 'like', 'likely', 'may', 'me', 'might', 'most', 'must', 'my', 'neither', 'no', 'nor', 'not', 'of', 'off', 'often', 'on', 'only', 'or', 'other', 'our', 'own', 'rather', 'said', 'say', 'says', 'she', 'should', 'since', 'so', 'some', 'than', 'that', 'the', 'their', 'them', 'then', 'there', 'these', 'they', 'this', 'tis', 'to', 'too', 'twas', 'us', 'wants', 'was', 'we', 'were', 'what', 'when', 'where', 'which', 'while', 'who', 'whom', 'why', 'will', 'with', 'would', 'yet', 'you', 'your']
 		self.instance.sources = ''
-		self.instance.RSSName ='test'
+		self.instance.RSSName ='foxnews'
 		self.instance.current_path = ''
 		self.instance.path = ''
 		self.instance.ppath = ''
@@ -30,12 +30,12 @@ class TestRSSCrawlerFunctions(unittest.TestCase):
 
 	# test download a whole webpage function with a wrong link
 	def test_fetchWebpage_wrongURL(self):
-		page,link = self.instance.fetchWebpage('www')
+		page,link,file_id = self.instance.fetchWebpage('www')
 		self.assertEqual(page, None)
 
 	# test download a whole webpage function with a correct link
 	def test_fetchWebpage_URL(self):
-		page,link = self.instance.fetchWebpage('http://www.nus.edu.sg')
+		page,link,file_id = self.instance.fetchWebpage('http://www.nus.edu.sg')
 		self.assertTrue(len(page)>0)
 
 	# test special processing for special websites, such as, NewYork Times and Straits Times
@@ -47,8 +47,8 @@ class TestRSSCrawlerFunctions(unittest.TestCase):
 
 	# test to store fetched wenpage into a html file and update a record file, that is, MERGE.TXT
 	def test_storeNewLinkInMERGEandHTML(self):
-		page,link = self.instance.fetchWebpage('http://www.nus.edu.sg')
-		result = self.instance.storeNewLinkInMERGEandHTML('http://www.nus.edu.sg',page, 'nus',link,1, '2012-06-20')
+		page,link,file_id = self.instance.fetchWebpage('http://www.nus.edu.sg')
+		result = self.instance.storeNewLinkInMERGEandHTML(file_id,'http://www.nus.edu.sg',page, 'nus',link,link,1, '2012-06-20')
 		self.assertEqual(result, None)
 
 	# test the function of downlaoding words frequency record from a database, that is, RSSName.db
@@ -67,14 +67,14 @@ class TestRSSCrawlerFunctions(unittest.TestCase):
 		self.assertTrue('code' in result['20'].keys())
 		self.assertEqual(result['20']['code'], 2)		
 
-	# test to create a database , that is, fetchedlinks.db, or download all records from the database in terms of the fetched webpages 
-	def test_loadAllFetchedLinks(self):
-		result = self.instance.loadAllFetchedLinks('fetchedlinks')
+	# test to create a database , that is, fetchedlinks.db
+	def test_createAllFetchedLinks(self):
+		result = self.instance.createAllFetchedLinks('fetchedlinks')
 		self.assertTrue(str(result) not in ('failed'))
 
 	# test the function of update recorded database , that is, fetchedlinks.db , in terms of the fetched webpages .
 	def test_updateNewLinks(self):
-		self.instance.loadAllFetchedLinks('fetchedlinks')
+		self.instance.createAllFetchedLinks('fetchedlinks')
 		result = self.instance.updateNewLinks('fetchedlinks','http://www.nus.edu.sg')
 		self.assertEqual(result, 'success')
 
