@@ -33,9 +33,10 @@ import sqlite3
 import json
 import ConfigParser
 from urlparse import urlparse
+import md5
 
 from SpecialSites import SpecialSites
-from newsextractor import Extract
+from newsextractor import NewsBlogExtractor
 
 class rsscrawler:
 	# every webpage fetched is stored in a specified html file in hard disk.
@@ -43,16 +44,16 @@ class rsscrawler:
 	def replaceAll4FileName(self,oldName):
 		dd = oldName.replace('http://','')
 		dd = dd.replace('https://','')
-		dd = dd.replace('/',' ')
-		dd = dd.replace('?', ' ')
-		dd = dd.replace(':', ' ')
-		dd = dd.replace('\\', ' ')
-		dd = dd.replace('\n', ' ')
-		dd = dd.replace('*', ' ')
-		dd = dd.replace('<', ' ')
-		dd = dd.replace('>', ' ')
-		dd = dd.replace('|', ' ')
-		dd = dd.replace('"', ' ')
+		dd = dd.replace('/','.')
+		dd = dd.replace('?', '.')
+		dd = dd.replace(':', '.')
+		dd = dd.replace('\\', '.')
+		dd = dd.replace('\n', '.')
+		dd = dd.replace('*', '.')
+		dd = dd.replace('<', '.')
+		dd = dd.replace('>', '.')
+		dd = dd.replace('|', '.')
+		dd = dd.replace('"', '.')
 		return dd
 
 	# load word frequency record from cnn.txt file
@@ -123,7 +124,7 @@ class rsscrawler:
 			c = conn.cursor()
 			if type(link) is str:
 				link=link.decode('utf-8')
-			for  a in set(c.execute('SELECT * FROM links')):
+			for a  in set(c.execute('SELECT link FROM links WHERE link = link')):
 				if link == a[0]:
 					c.close()
 					return 'True'
@@ -156,18 +157,21 @@ class rsscrawler:
 				filehandle = urllib.urlopen(images[a]) # fetch an image 
 				img = filehandle.read()
 				link = filehandle.geturl()
-				img_type = urlparse(link).geturl().split('?')[0].split('.').pop()
+				img_type = urlparse(link).geturl().split('?')[0].split('.').pop() # get type of image
 				if img_type != 'png' and img_type !='jpg' and img_type !='gif':
 					img_type = 'dynamic_img'
 				# print "img_type = "+img_type
-				img_filename = self.replaceAll4FileName(a)
+				try:
+					img_filename = md5.new(a).hexdigest()
+				except:
+					pass
 			except :
 				# logging.warning("there is a connection error for images")
 				continue
 			filehandle.close()
 
 			try:
-				myFile = open(self.sub_ppath  + str(file_id)+'.'+img_filename+'.'+img_type, 'wb')
+				myFile = open(self.sub_ppath  + str(file_id)+'.'+img_filename, 'wb')
 				myFile.write(img)
 				data = {'webpage_link':webpage_link, 'original_link':a}
 				content = json.dumps(data)
@@ -186,10 +190,13 @@ class rsscrawler:
 
 	# store new fetched links into MERGE.TXT and a whole webpage into .html file 
 	def storeNewLinkInMERGEandHTML(self, file_id, rssResource, page, title, firstPage_link, link, page_num, date):
-		dd = self.replaceAll4FileName(title)
+		try:
+			file_name = md5.new(title).hexdigest()
+		except:
+			pass
 		# print "ppath = "+self.ppath
 		try:
-			myFile = open(self.sub_ppath  + str(file_id)+'.'+dd+'.html', 'w')
+			myFile = open(self.sub_ppath  + str(file_id)+'.'+file_name+'.html', 'w')
 			myFile.write(page)
 			language = 'English'
 			sourcename = self.RSSName
@@ -198,7 +205,7 @@ class rsscrawler:
 
 			data =  { 'source':rssResource, 'language': language, 'sourcename':sourcename, 'firstPage_link':firstPage_link, 'page': page_num, 'title': title, 'timestamp-sec': date}
 			content = json.dumps(data)
-			new_line_webpage = str(file_id)+'.'+dd.encode('utf-8')+'.html'+'\t' + 'html'+'\t'+ str(file_id)+'\t' + link + '\t' + link + '\t' + content + '\t' + '0' + '\t' + '-1'
+			new_line_webpage = str(file_id)+'.'+file_name+'.html'+'\t' + 'html'+'\t'+ str(file_id)+'\t' + link + '\t' + link + '\t' + content + '\t' + '0' + '\t' + '-1'
 			myFile2 = open(self.sub_ppath  + self.config['storagefile'], 'a')
 			myFile2.write(new_line_webpage)
 			myFile2.write('\n')
@@ -367,7 +374,7 @@ class rsscrawler:
 
 			# fetch all items from a RSS source 
 			for dd in d.entries:
-				ex = Extract()
+				ex = NewsBlogExtractor()
 				page_num = 1
 				page, link, file_id= self.fetchWebpage(dd.link)
 				firstPage_link = link
@@ -391,9 +398,16 @@ class rsscrawler:
 						# store a new link in a special file , such as, MERGE.TXT, and store its whole webpage in a HTML file
 						self.storeNewLinkInMERGEandHTML(file_id, rssResource, page, dd.title, firstPage_link, link, page_num, str(time.mktime(dd.published_parsed)+self.config['timezonedifference']*3600))
 
+						# special processing for special sites
+						language = 'English'
+						sourcename = self.RSSName
+						if self.RSSName in self.config['multisource']:
+							sourcename,language = SpecialSites.getNameAndLanguageFromResource(rssResource,sourcename,language)
+
 						# store all images in the webpage
 						o = urlparse(link)
-						images = ex.findAllImages(page, o.netloc, self.RSSName)
+						images = ex.findAllImages(page, o.netloc, sourcename)
+						# print images
 						self.fetchAllImages(images, link)
 
 						# calculate word frequency in title
@@ -403,7 +417,7 @@ class rsscrawler:
 						new_links.append(link)
 
 						# process multiple pages
-						link = ex.findNextPage(page, self.RSSName)
+						link = ex.findNextPage(page, sourcename)
 						if link != None:
 							page_num +=1
 							page, link,file_id = self.fetchWebpage(link)

@@ -7,7 +7,16 @@ __flags__ = { \
 	'http://feeds2.feedburner.com/Noobcookcom': ['noobcook', 'English' ], \
 	'http://www.ladyironchef.com/feed/': ['ladyironchef', 'English' ], \
 	'http://blog.sina.com.cn/rss/1300871220.xml': ['xuxiaoming', 'Chinese'], \
-	'http://blog.sina.com.cn/rss/1191258123.xml': ['twocold', 'Chinese' ]
+	'http://blog.sina.com.cn/rss/1191258123.xml': ['twocold', 'Chinese' ], \
+	'http://feeds.feedburner.com/MissTamChiakSingaporeFoodBlogchinese': ['MissTamChiakSingaporeFoodBlogchinese', 'English' ], \
+	'http://feeds.feedburner.com/mrbrown': ['mrbrown', 'English' ], \
+	'http://yawningbread.wordpress.com/feed/': ['yawningbread', 'English' ], \
+	'http://yoursdp.org/index.php/component/ninjarsssyndicator/?feed_id=1&format=raw': ['yoursdp', 'English' ], \
+	'http://feeds.feedburner.com/Habitatnews': ['habitatnews', 'English' ], \
+	'http://singaporedaily.net/feed/': ['singaporedaily', 'English' ], \
+	'http://feeds.feedburner.com/karencheng': ['karencheng', 'English' ], \
+	'http://feeds.feedburner.com/sabrinasg': ['sabrinasg', 'English' ], \
+	'http://feeds.feedburner.com/Soapz': ['soapz', 'English' ], \
 }
 
 class SpecialSites:

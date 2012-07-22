@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 import re
-from bs4 import BeautifulSoup
+from BeautifulSoup import BeautifulSoup
+from datetime import tzinfo, timedelta, datetime
 
-# [ matching pattern ]
-__flags__ = { \
+# news (and blogs) extractor for Fang Ning's sources
+# notes added by Anqi
+
+class NewsBlogExtractor:
+
+    # [ matching pattern ]
+    # moved inside the class by Anqi
+    # TODO: need to be moved to a separate config file
+    __flags__ = { \
     'cnn': {'content':['p', 'class' , 'cnn_storypgraphtxt'], 'title':['h1'], 'date':['div','class','cnn_strytmstmp'], 'date_extract':['(\w+) ([0-9]{1,2}), ([0-9]{4})']}, \
     'economist': {'content':['id', 'id' , 'ec-article-body'], 'title':['h1'], 'date':['p','class','ec-article-info'], 'date_extract':['(\w+) ([0-9]{1,2})\w* ([0-9]{4})']}, \
     'foxnews': {'content':['div', 'class' , 'article-text'], 'title':['h1'], 'date':['p','class','published updated dtstamp'], 'date_extract':['Published (\w+) ([0-9]{1,2}), ([0-9]{4})']},  \
@@ -22,8 +30,8 @@ __flags__ = { \
     'ladyironchef':{'content':['id' , 'id' ,'contentleft'], 'title':['h1'], 'date':['p','class','date'], 'date_extract':['(\w+) ([0-9]{1,2}), ([0-9]{4})']}, \
     'noobcook': {'content':['div', 'class' , 'entry-content' ], 'title':['h1'], 'date':['p','class','headline_meta'], 'date_extract':['(\w+) ([0-9]{1,2}), ([0-9]{4})']}, \
     'vivawoman': {'content':['id', 'id' , 'content'], 'title':['h1'], 'date':['span','class','date published time'], 'date_extract':['([0-9]{1,2}) (\w+) ([0-9]{4})$']}, \
-    'xuxiaoming': {'content':['div', 'id' , 'sina_keyword_ad_area2'], 'title':['h2'], 'date':['span','class','time SG_txtc'], 'date_extract':['\(([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}:[0-9]{1,2}):[0-9]{1,2}\)']}, \
-    'twocold': {'content':['div', 'id' , 'sina_keyword_ad_area2'], 'title':['h2'], 'date':['span','class','time SG_txtc'], 'date_extract':['\(([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}:[0-9]{1,2}):[0-9]{1,2}\)']},\
+    'xuxiaoming': {'removehead':True, 'content':['div', 'id' , 'sina_keyword_ad_area2'], 'title':['h2'], 'date':['span','class','time SG_txtc'], 'date_extract':['\(([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}:[0-9]{1,2}):[0-9]{1,2}\)']}, \
+    'twocold': {'removehead':True, 'content':['div', 'id' , 'sina_keyword_ad_area2'], 'title':['h2'], 'date':['span','class','time SG_txtc'], 'date_extract':['\(([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}:[0-9]{1,2}):[0-9]{1,2}\)']},\
     'jpost':{'content':['div', 'class' , 'body'], 'title':['h1'], 'date':['div','class','date'], 'date_extract':['([0-9]{1,2})/([0-9]{1,2})/([0-9]{4}) ([0-9]{1,2}:[0-9]{1,2})']}, \
     'channelnewsasia':{'content':['id', 'id' , 'articlecontent'], 'title':['head'], 'date':['p','class','header'], 'date_extract':['\w+: ([0-9]{1,2})\w* (\w+) ([0-9]{4})']}, \
     'bbc':{'content':['tag', 'tag' , 'p'], 'title':['h1'], 'date':['span','class','story-date'], 'date_extract':['([0-9]{1,2}) (\w+) ([0-9]{4}) \w+ \w+ \w+ ([0-9]{1,2}:[0-9]{1,2}) (\w+)']}, \
@@ -34,79 +42,128 @@ __flags__ = { \
     'ieatishootipost':{'content':['div', 'class' , 'post-body entry-content'], 'title':['h3'], 'date':['a','class','timestamp-link'], 'date_extract':['\w+, (\w+) ([0-9]{1,2}), ([0-9]{4})']}, \
     'yawningbread':{'content':['div', 'class' , 'entry-content'], 'title':['h3'], 'date':['abbr','class','published'], 'date_extract':['([0-9]{1,2}) (\w+) ([0-9]{4})']}, \
     'yoursdp':{'content':['tag', 'tag' , 'p'], 'title':['head'], 'date':['td','class','createdate'], 'date_extract':['([0-9]{1,2}) (\w+) ([0-9]{4})']}, \
+    'habitatnews':{'content':['p', 'class' , 'blog'], 'title':['h3'], 'date':['p','class','blogdate'], 'date_extract':['\w+ ([0-9]{1,2}) (\w+) ([0-9]{4})']}, \
+    'singaporedaily':{'content':['p', 'class' , 'blog'], 'title':['h2'], 'date':['h2','class','post_name'], 'date_extract':['\w+ \w+: ([0-9]{1,2}) (\w+) ([0-9]{4})']}, \
+    'karencheng':{'content':['tag', 'tag' , 'p'], 'title':['h2'], 'date':['karencheng', '',''], 'date_extract':['([0-9]{1,2}) (\w+) ([0-9]{4})']}, \
+    'sabrinasg':{'content':['div', 'class' , 'p_contentbody'], 'title':['h1'], 'date':['div', 'class','p_submitted'], 'date_extract':['(\w+) ([0-9]{1,2}), ([0-9]{4})']}, \
+    'soapz':{'content':['div', 'class' , 'date-posts'], 'title':['h3'], 'date':['h2', 'class','date-header'], 'date_extract':['\w+, (\w+) ([0-9]{1,2}), ([0-9]{4})']}, \
+    'yahoo':{'content':['div', 'class' , 'entry-content'], 'title':['h1'], 'date':['cite', 'class','byline vcard'], 'date_extract':['(\w+) ([0-9]{1,2}), ([0-9]{4})$']}, \
+    'wsj':{'content':['div', 'id' , 'recipeACShopAndBuyText'], 'title':['h1'], 'date':['li', 'class','dateStamp'], 'date_extract':['(\w+) ([0-9]{1,2}), ([0-9]{4}),']}, \
+    'msn':{'content':['tag', 'tag' , 'p'], 'title':['h1'], 'date':['li', 'class','dateStamp'], 'date_extract':['(\w+) ([0-9]{1,2}), ([0-9]{4}),']}, \
+    'time':{'content':['span', 'class' , 'lingo_region'], 'title':['h1'], 'date':['span', 'class','date'], 'date_extract':['(\w+) ([0-9]{1,2}), ([0-9]{4})$']}, \
+    'scmp':{'content':['span', 'class' , 'article_body'], 'title':['h1'], 'date':['span', 'class','article_byline'], 'date_extract':['(\w+) ([0-9]{1,2}), ([0-9]{4})$']}, \
 }
-
-class Extract:
-    def extract(self, stream, sourcename = None):
-        if not __flags__.has_key(sourcename):
-            return None
-        res = __flags__[sourcename]
+    def convertMonth(self,string):
+        table = {'jan':'1', 'january':'1',\
+        'feb':'2', 'February':'2',\
+        'mar':'3','march':'3',\
+        'apr':'4','april':'4',\
+        'may':'5',\
+        'jun':'6','june':'6',\
+        'jul':'7','july':'7',\
+        'aug':'8','august':'8',\
+        'sep':'9','september':'9',\
+        'oct':'10','october':'10',\
+        'nov':'11','november':'11',\
+        'dec':'12','december':'12'}
         
-        if (sourcename == 'xuxiaoming' or sourcename == 'twocold'): # special for sina blog
+        if string.lower() in table.keys():
+            return table[string.lower()]
+        else:
+            return '0'
+
+    # main extractor function
+    #   returns None if the resource is not available
+    #     otherwise, returns an object to the indexing program
+    #   page is a text string containing the html content, not a link
+    #   sourcename is the specified resource name
+    def extract(self, stream, sourcename = None):
+
+        # check if the sourcename is available
+        if not self.__flags__.has_key(sourcename):
+            return None
+        res = self.__flags__[sourcename]
+        
+        # special for sina blogs
+        # the <head> part of sina's blogs has something wrong (?) which 
+        #   blocks BeautifulSoup continuing parsing the body... 
+        #   it results in an html with only the head part
+        # so we remove the head part for now
+        if 'removehead' in res and res['removehead'] == True:
             soup = BeautifulSoup(stream[:stream.find('<head>')] + stream[stream.find('<body>'):])
         else:
             soup = BeautifulSoup(stream)
 
-        # remove script
+        # remove scripts
         for script in soup("script"):
             soup.script.extract()
 
         # extract title
+        # res['title'] is a list ([0]) but not a simple string: for flexibility, extension in the future
         try:
-            if res['title'][0] == 'h1':
-                title = soup.h1.get_text()
-            elif res['title'][0] == 'h2': # special processing for irishsun
-                title = soup.h2.get_text()
-            elif res['title'][0] == 'h3': # special processing for MissTamChiakSingaporeFoodBlogchinese
-                title = soup.h3.get_text()                
-            elif res['title'][0] == 'head':  # special processing for channelnewsasia , corkman, yoursdp
+            if res['title'][0] in set(['h1', 'h2', 'h3']):
+                title = soup.find(res['title'][0]).get_text()            
+            elif res['title'][0] == 'head':  # special processing for channelnewsasia , corkman, yoursdp , e.g. , <title>Suu Kyi makes Myanmar parliament debut - Channel NewsAsia </title>
                 title = soup.html.head.title.string.split('-')[0]
-            title = title.replace('\n',' ').replace('\t',' ').strip(' ')
+            title = re.sub(u'[\u0000-\u0020]+', ' ', title).strip()
         except:
             title = ''
 
         # extract date 
         try:
-            if res['date'][0] == 'tag':
+            # TODO: give some descriptions or examples of "data" for better understanding
+            if res['date'][0] == 'tag': # just find according to unique tag ID as <time> ***</time>
                 data = soup.find(res['date'][2]).get_text()
-                print "date = " + data
-            elif res['date'][0] == 'id':
+                # print "date = " + data
+            elif res['date'][0] == 'id': # just find according to a tag as <date id='***'> *** <date> 
                 # print "date = " + soup.find(id=res['date'][2]).get_text()
                 data = soup.find(id=res['date'][2]).get_text()
-            elif res['date'][0] == 'irishsun': # special for irishsun
+            elif res['date'][0] == 'irishsun': # special for irishsun , find according to relative position in tags
                 data =  soup.h2.findNextSibling('p').get_text()
                 # print "date = " + data
-            else:
+            elif res['date'][0] == 'karencheng': # special for karencheng , find according to relative position in tags
+                data =  soup.h2.findNextSibling('small').get_text()
+            else: # find according to unique tag type as <div class='date'> ***</div>
                 data = soup.find(res['date'][0], {res['date'][1]:res['date'][2]}).get_text()
                 # print "data = "+ data
-            data = data.replace('\n',' ').replace('\t',' ').strip(' ')
+            data = re.sub(u'[\u0000-\u0020]+', ' ', data).strip()
 
+            # extracted date format: (month, day, year, [hour:minute], [am|pm], [time zone]), e.g., ('June', '01' , '2012' , '10:10', 'AM' , 'GMT')
+            # TODO: unify the string formats, e.g. Jun = June, AM=am
             date = re.search(res['date_extract'][0], data)
-            if (sourcename == 'yoursdp' or sourcename == 'yawningbread' or sourcename == 'MissTamChiakSingaporeFoodBlogchinese' or sourcename == 'rfi' or sourcename == 'thesun' or sourcename == 'irishsun' or sourcename == 'vivawoman' or sourcename == 'channelnewsasia'): # e.g. 01 June 2012
+            if sourcename in set(['singaporedaily' ,'habitatnews','yoursdp' , 'yawningbread' , 'MissTamChiakSingaporeFoodBlogchinese' ,'rfi' ,'thesun' ,'irishsun' , 'vivawoman', 'channelnewsasia']): # e.g. 01 June 2012
                 # print "111 = " + date.group(1) 
-                t = (date.group(2) , date.group(1), date.group(3)) 
-                new_date = str(t)
+                new_date = datetime(date.group(3), self.convertMonth(date.group(2)), date.group(1)).isoformat(' ')
+                # t = (date.group(2) , date.group(1), date.group(3)) 
+                # new_date = str(t)
             elif sourcename == 'dailymail': # 14:21 GMT, 8 June 2012
                 # print "222 = " + date.group(0)
-                t = (date.group(4) , date.group(3), date.group(5),  date.group(1), date.group(2))
-                new_date = str(t)
+                new_date = datetime(date.group(5), self.convertMonth(date.group(4)), date.group(3)).isoformat(' ')
+                # t = (date.group(4) , date.group(3), date.group(5),  date.group(1), date.group(2))
+                # new_date = str(t)
             elif sourcename == 'guardian': # 8 June 2012 19.47 BST
-                t = (date.group(2) , date.group(1), date.group(3),  date.group(4).replace('.',':'), date.group(5))
-                new_date = str(t) 
+                new_date = datetime(date.group(3), self.convertMonth(date.group(2)), date.group(1)).isoformat(' ')
+                # t = (date.group(2) , date.group(1), date.group(3),  date.group(4).replace('.',':'), date.group(5))
+                # new_date = str(t) 
             elif sourcename == 'ananova': # 10 June 2012, 4:58
-                t = (date.group(2) , date.group(1), date.group(3),  date.group(4))
-                new_date = str(t)
+                new_date = datetime(date.group(3), self.convertMonth(date.group(2)), date.group(1)).isoformat(' ')
+                # t = (date.group(2) , date.group(1), date.group(3),  date.group(4))
+                # new_date = str(t)
             elif sourcename == 'xuxiaoming' or sourcename == 'twocold': # 2012-05-10 03:21:27
-                t = (date.group(2) , date.group(3), date.group(1),  date.group(4))
-                new_date = str(t)
+                new_date = datetime(date.group(3), self.convertMonth(date.group(2)), date.group(1)).isoformat(' ')
+                # t = (date.group(2) , date.group(3), date.group(1),  date.group(4))
+                # new_date = str(t)
             elif sourcename == 'bbc': # 22 June 2012 Last updated at 17:43 GMT
-                t = (date.group(2) , date.group(1), date.group(3),  date.group(4), date.group(5))
-                new_date = str(t)
+                new_date = datetime(date.group(3), self.convertMonth(date.group(2)), date.group(1)).isoformat(' ')
+                # t = (date.group(2) , date.group(1), date.group(3),  date.group(4), date.group(5))
+                # new_date = str(t)
             elif sourcename == 'ynet': #    06.22.12, 09:33
-                t = (date.group(1) , date.group(2), '20'+date.group(3),  date.group(4))
-                new_date = str(t)                                        
+                new_date = datetime('20'+date.group(3), date.group(1), date.group(2)).isoformat(' ')
+                # t = (date.group(1) , date.group(2), '20'+date.group(3),  date.group(4))
+                # new_date = str(t)                                        
             else : # June 01 2012 10:20 AM GMT
-                new_date = str(date.groups())
+                new_date = datetime(date.group(3), self.convertMonth(date.group(1)), date.group(2)).isoformat(' ')
+                # new_date = str(date.groups())
             # print new_date
         except:
             print "there is an error"
@@ -130,43 +187,51 @@ class Extract:
 
         # Create an object to return
         # Note: the "maincontent" must exist
+        # other fields are optional, thus must have a postfix. _s for string type, _s_notindex for string but not indexed
 
-        extracted = {'maincontent': text, 'title':title, 'date':new_date}
+        extracted = {'maincontent': text, 'title_s':title}
+        if len(new_date) > 0:
+            extracted['date_s_notindex'] = new_date
         return extracted
 
     # merge multiple pages into one webpage
-    def extractMore(self, pages, sourcename = None):
+    # pages is an array, containing elements of string, each of which is an html
+    # output is the merged plain body text
+    def extractMultiple(self, pages, sourcename = None):
         text = ''
+        new_date = ''
         for stream in pages:
             d = self.extract(stream, sourcename)
-            text += d[maincontent]
-            title = d[title]
-            date = d[date]
+            text += d['maincontent']
+            title = d['title_s']
+            if len(d['date_s_notindex']) > 0:
+                new_date = d['date_s_notindex']
 
         # Create an object to return
-        # Note: the "maincontent" must exist
-
-        extracted = {'maincontent': text, 'title':title, 'date':new_date}
+        extracted = {'maincontent': text, 'title_s':title}
+        if len(new_date) > 0:
+            extracted['date_s_notindex'] = new_date
         return extracted
 
     # find next page
+    # the format (nav bar) is defined in __flags__
     def findNextPage(self, page, sourcename = None):
-            if not __flags__.has_key(sourcename):
-                return None
-            res = __flags__[sourcename]
-            if not res.has_key('page'):
-                return None
-            soup = BeautifulSoup(page)
-            link = soup.find('a', { "class" : "next" })
-            if link != None and link['href'][0] == '/':
-                return res['page'][0]+link['href']
-            else:
-                return None
+        if not self.__flags__.has_key(sourcename):
+            return None
+        res = self.__flags__[sourcename]
+        if not res.has_key('page'):
+            return None
+        soup = BeautifulSoup(page)
+        link = soup.find('a', { "class" : "next" })
+        if link != None and link['href'][0] == '/':
+            return res['page'][0]+link['href']
+        else:
+            return None
 
     # findAllImages
     def findAllImages(self, page, netloc, sourcename = None):
-        if not __flags__.has_key(sourcename):
-            return None
+        # if not self.__flags__.has_key(sourcename):
+        #     return None
         link_head = ''
         soup = BeautifulSoup(page)
         try:
@@ -186,4 +251,3 @@ class Extract:
                 images[link] = link
         # print images
         return images
-
