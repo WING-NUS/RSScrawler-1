@@ -33,7 +33,7 @@ import sqlite3
 import json
 import ConfigParser
 from urlparse import urlparse
-import md5
+import hashlib
 
 from SpecialSites import SpecialSites
 from newsextractor import NewsBlogExtractor
@@ -162,7 +162,7 @@ class rsscrawler:
 					img_type = 'dynamic_img'
 				# print "img_type = "+img_type
 				try:
-					img_filename = md5.new(a).hexdigest()
+					img_filename = hashlib.md5(a).hexdigest()
 				except:
 					pass
 			except :
@@ -191,10 +191,10 @@ class rsscrawler:
 	# store new fetched links into MERGE.TXT and a whole webpage into .html file 
 	def storeNewLinkInMERGEandHTML(self, file_id, rssResource, page, title, firstPage_link, link, page_num, date):
 		try:
-			file_name = md5.new(title).hexdigest()
+			file_name = hashlib.md5(title).hexdigest()
 		except:
 			pass
-		# print "ppath = "+self.ppath
+		# print "file name = "+file_name
 		try:
 			myFile = open(self.sub_ppath  + str(file_id)+'.'+file_name+'.html', 'w')
 			myFile.write(page)
@@ -258,11 +258,11 @@ class rsscrawler:
 		try:
 			opts, args = getopt.getopt(argv,"hn:i:s:")
 		except getopt.GetoptError:
-			sys.stderr.write('rsscrawler.py -n <news name> -i <sources file> [-s <stopwords file>] \n')
+			sys.stderr.write('rsscrawler.py -n <timestamp.name> -i <sources file> [-s <stopwords file>] \n')
 			sys.exit(2)
 		for opt, arg in opts:
 			if opt == '-h':
-				sys.stderr.write( 'rsscrawler.py -n <news name> -i <sources file> [-s <stopwords file>]\n')
+				sys.stderr.write( 'rsscrawler.py -n <timestamp.name> -i <sources file> [-s <stopwords file>]\n')
 				sys.exit()
 			elif opt == '-n':
 				self.RSSName = arg.split('.')[1]

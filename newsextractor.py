@@ -244,10 +244,13 @@ class NewsBlogExtractor:
             
         images = {}
         for x in soup.findAll('img'):
-            link = x['src'].strip(' ')
-            if link[:7] != 'http://':
-                images[link] = link_head+link
-            else:
-                images[link] = link
+            try:
+                link = x['src'].strip(' ')
+                if link[:7] != 'http://':
+                    images[link] = link_head+link
+                else:
+                    images[link] = link
+            except:
+                pass
         # print images
         return images
