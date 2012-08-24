@@ -171,7 +171,7 @@ class rsscrawler:
 			filehandle.close()
 
 			try:
-				myFile = open(self.sub_ppath  + str(file_id)+'.'+img_filename, 'wb')
+				myFile = open(self.sub_ppath  + str(file_id)+'.'+img_filename+'.'+"img", 'wb')
 				myFile.write(img)
 				data = {'webpage_link':webpage_link, 'original_link':a}
 				content = json.dumps(data)
@@ -191,7 +191,7 @@ class rsscrawler:
 	# store new fetched links into MERGE.TXT and a whole webpage into .html file 
 	def storeNewLinkInMERGEandHTML(self, file_id, rssResource, page, title, firstPage_link, link, page_num, date):
 		try:
-			file_name = hashlib.md5(title).hexdigest()
+			file_name = hashlib.md5(title.encode('utf-8')).hexdigest()
 		except:
 			pass
 		# print "file name = "+file_name
@@ -300,6 +300,7 @@ class rsscrawler:
 		self.config['timezonedifference'] = conf.getint("System", "timezonedifference")
 		self.config['wordsFrequency'] = conf.get("System", "wordsFrequency")
 		self.config['storagefile'] = conf.get("System", "storagefile")
+		self.config['imagestorage'] = conf.get("System", "imagestorage")
 		self.config['specialsites'] = eval(conf.get("Specialprocessing", "specialsites"))
 		self.config['multisource'] = eval(conf.get("Specialprocessing", "multisource"))
 		# print "wordsFrequency = " + str(self.config['wordsFrequency'])
@@ -405,10 +406,11 @@ class rsscrawler:
 							sourcename,language = SpecialSites.getNameAndLanguageFromResource(rssResource,sourcename,language)
 
 						# store all images in the webpage
-						o = urlparse(link)
-						images = ex.findAllImages(page, o.netloc, sourcename)
-						# print images
-						self.fetchAllImages(images, link)
+						if rssinstance.config['imagestorage'] == "True":
+							o = urlparse(link)
+							images = ex.findAllImages(page, o.netloc, sourcename)
+							# print images
+							self.fetchAllImages(images, link)
 
 						# calculate word frequency in title
 						if self.config['wordsFrequency'] == "True":
